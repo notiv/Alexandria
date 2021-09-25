@@ -20,4 +20,6 @@ for path, image, boxes in zip(images_paths, images_list, boxes_positions):
     print(path)
     # returns a iterator
     sub_images = ocr.get_boxes_per_image(image, boxes)
+    for i, img in enumerate(sub_images):
+        d = ocr.image_to_text(img)
     # add ocr call

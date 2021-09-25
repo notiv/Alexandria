@@ -1,9 +1,15 @@
 import pytesseract
 
+from matplotlib import pyplot as plt
 from pytesseract import Output
 
 def image_to_text(img):
-    d = pytesseract.image_to_data(img, output_type=Output.DICT)
+    try: 
+        d = pytesseract.image_to_data(img, output_type=Output.DICT)
+    except Exception:
+        plt.imshow(img)
+
+
     text = d.get('text')
 
     return text

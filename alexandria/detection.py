@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 import cv2
 import glob
+
 from collections import namedtuple
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-
 
 _WHITE = (255, 255, 255)
 img = None
@@ -14,7 +14,6 @@ img0 = None
 outputs = None
 
 _DATA_FOLDER = "data"
-
 
 # Load names of classes and get random colors
 def load_classes(filename="coco.names"):
@@ -43,14 +42,11 @@ def load_images(glob_string="*.jp*"):
     return img_paths, list(map(lambda x: cv2.imread(x), img_paths))
 
 
-# %%
 def detect(img, net):
-
     blob = cv2.dnn.blobFromImage(
         img, 1/255.0, (416, 416), swapRB=True, crop=False)
     net.setInput(blob)
     ln = get_number_layers(net)
-
     # combine the 3 output groups into 1 (10647, 85)
     # large objects (507, 85)
     # medium objects (2028, 85)
@@ -58,15 +54,12 @@ def detect(img, net):
     return np.vstack(net.forward(ln))
 
 
-# %%
 def get_boxes(img, outputs, conf, classes_names, colors):
     H, W = img.shape[:2]
-
     boxes = []
     confidences = []
     classIDs = []
     positions = []
-
     for output in outputs:
         scores = output[5:]
         classID = np.argmax(scores)
@@ -79,7 +72,6 @@ def get_boxes(img, outputs, conf, classes_names, colors):
             boxes.append([*p0, int(w), int(h)])
             confidences.append(float(confidence))
             classIDs.append(classID)
-
     indices = cv2.dnn.NMSBoxes(boxes, confidences, conf, conf-0.1)
     Position = namedtuple(
         'Position',
@@ -97,19 +89,17 @@ def get_boxes(img, outputs, conf, classes_names, colors):
             positions.append(pos)
     return positions
 
+
 def show_img_rectangles(img, box_position):
     # Create figure and axes
     fig, ax = plt.subplots()
-
     # Display the image
     ax.imshow(img)
-
     for boxes in box_position:
         xy, width, height, color = boxes.args4rectangle
         # Create a Rectangle patch
         ax.add_patch(
             patches.Rectangle(xy, width, height, edgecolor="red", fill=False))
-
     # Add the patch to the Axes
     plt.show()
 
@@ -117,10 +107,9 @@ def show_img_rectangles(img, box_position):
 if __name__ == "__main__":
     # user input
     confidence = 0.6
-
     classes, colors = load_classes("coco.names")
     model = load_model(cfg='yolov3.cfg', model='yolov3.weights')
-    images_list = load_images()
+    images_paths, images_list = load_images()
     outputs_list = [detect(i, model) for i in images_list]
     boxes_positions = [get_boxes(i, o, confidence, classes, colors)
                        for i, o in zip(images_list, outputs_list)]
