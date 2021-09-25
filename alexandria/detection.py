@@ -13,7 +13,6 @@ outputs = None
 _DATA_FOLDER = "data"
 
 
-
 # Load names of classes and get random colors
 def load_classes(filename="coco.names"):
     with open(os.path.join(_DATA_FOLDER, filename)) as infile:
@@ -21,6 +20,7 @@ def load_classes(filename="coco.names"):
     np.random.seed(42)
     colors = np.random.randint(0, 255, size=(len(classes), 3), dtype='uint8')
     return classes, colors
+
 
 def load_model(cfg='yolov3.cfg', model='yolov3.weights'):
     cfg_file = os.path.join(_DATA_FOLDER, cfg)
@@ -34,16 +34,17 @@ def get_number_layers(net):
     ln = net.getLayerNames()
     return [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
+
 def load_images(glob_string="*.jp*"):
     img_paths = glob.glob(_DATA_FOLDER+"/"+glob_string)
     return list(map(lambda x: cv2.imread(x), img_paths))
 
 
-
 # %%
 def detect(img, net):
 
-    blob = cv2.dnn.blobFromImage(img, 1/255.0, (416, 416), swapRB=True, crop=False)
+    blob = cv2.dnn.blobFromImage(
+        img, 1/255.0, (416, 416), swapRB=True, crop=False)
     net.setInput(blob)
     ln = get_number_layers(net)
 
@@ -88,10 +89,9 @@ def get_boxes(img, outputs, conf):
                 x_pos=(x, x+w),
                 y_pos=(y, y+h),
                 args4rectangle=(img, (x, y), (x + w, y + h), color, 2)
-                )
+            )
             positions.append(pos)
     return pos
-
 
 
 if __name__ == "__main__":
@@ -103,17 +103,6 @@ if __name__ == "__main__":
     model = load_model(cfg='yolov3.cfg', model='yolov3.weights')
     images_list = load_images()
     outputs_list = [detect(i, model) for i in images_list]
-    boxes_positions =  [get_boxes(i, o, confidence) for i, o in zip(images_list, outputs_list)]
-    #cv2.rectangle(*b.args4rectangle)
-
-
-# %%
-#cv2.namedWindow('window')
-#cv2.createTrackbar('confidence', 'window', 50, 100, trackbar)
-
-
-# %%
-#load_image('data/IMG_0014.jpeg')
-
-
-# %%
+    boxes_positions = [get_boxes(i, o, confidence)
+                       for i, o in zip(images_list, outputs_list)]
+    # cv2.rectangle(*b.args4rectangle)
