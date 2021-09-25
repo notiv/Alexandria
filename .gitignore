@@ -137,3 +137,6 @@ models/
 
 # Mac related
 .DS_Store
+
+# Key
+api_key.txt
