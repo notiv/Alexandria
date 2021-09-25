@@ -4,6 +4,9 @@ import numpy as np
 import cv2
 import glob
 from collections import namedtuple
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
 
 _WHITE = (255, 255, 255)
 img = None
@@ -56,7 +59,7 @@ def detect(img, net):
 
 
 # %%
-def get_boxes(img, outputs, conf):
+def get_boxes(img, outputs, conf, classes_names, colors):
     H, W = img.shape[:2]
 
     boxes = []
@@ -67,6 +70,8 @@ def get_boxes(img, outputs, conf):
     for output in outputs:
         scores = output[5:]
         classID = np.argmax(scores)
+        if classes_names[classID] != "book":
+            continue
         confidence = scores[classID]
         if confidence > conf:
             x, y, w, h = output[:4] * np.array([W, H, W, H])
@@ -78,24 +83,38 @@ def get_boxes(img, outputs, conf):
     indices = cv2.dnn.NMSBoxes(boxes, confidences, conf, conf-0.1)
     Position = namedtuple(
         'Position',
-        ['img', 'x_slice', 'y_slice', 'args4rectangle'])
+        ['x_slice', 'y_slice', 'args4rectangle'])
     if len(indices) > 0:
         for i in indices.flatten():
             (x, y) = (boxes[i][0], boxes[i][1])
             (w, h) = (boxes[i][2], boxes[i][3])
             color = [int(c) for c in colors[classIDs[i]]]
             pos = Position(
-                img=img,
-                x_pos=(x, x+w),
-                y_pos=(y, y+h),
-                args4rectangle=(img, (x, y), (x + w, y + h), color, 2)
+                x_slice=(x, x+w),
+                y_slice=(y, y+h),
+                args4rectangle=((x, y), w, h, color)
             )
             positions.append(pos)
-    return pos
+    return positions
+
+def show_img_rectangles(img, box_position):
+    # Create figure and axes
+    fig, ax = plt.subplots()
+
+    # Display the image
+    ax.imshow(img)
+
+    for boxes in box_position:
+        xy, width, height, color = boxes.args4rectangle
+        # Create a Rectangle patch
+        ax.add_patch(
+            patches.Rectangle(xy, width, height, edgecolor="red", fill=False))
+
+    # Add the patch to the Axes
+    plt.show()
 
 
 if __name__ == "__main__":
-
     # user input
     confidence = 0.6
 
@@ -103,6 +122,7 @@ if __name__ == "__main__":
     model = load_model(cfg='yolov3.cfg', model='yolov3.weights')
     images_list = load_images()
     outputs_list = [detect(i, model) for i in images_list]
-    boxes_positions = [get_boxes(i, o, confidence)
+    boxes_positions = [get_boxes(i, o, confidence, classes, colors)
                        for i, o in zip(images_list, outputs_list)]
-    # cv2.rectangle(*b.args4rectangle)
+    for i, b in zip(images_list, boxes_positions):
+        show_img_rectangles(i, b)
