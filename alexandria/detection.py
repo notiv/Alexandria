@@ -40,7 +40,7 @@ def get_number_layers(net):
 
 def load_images(glob_string="*.jp*"):
     img_paths = glob.glob(_DATA_FOLDER+"/"+glob_string)
-    return list(map(lambda x: cv2.imread(x), img_paths))
+    return img_paths, list(map(lambda x: cv2.imread(x), img_paths))
 
 
 # %%
